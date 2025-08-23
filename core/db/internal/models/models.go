@@ -38,6 +38,11 @@ type Mod struct {
 	PublicKey string `json:"public_key"`
 }
 
+type Mods struct{
+	Peerid string `json:"peer_id"`
+	PublicKey string `json:"public_key"`
+}
+
 type ReportMsg struct {
 	PublicKey string `json:"public_key"`
 	Msg       Msg    `json:"msg"`

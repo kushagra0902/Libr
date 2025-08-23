@@ -8,6 +8,8 @@ import (
 	"crypto/x509"
 	"log"
 	"math/big"
+	"net/http"
+	//"os"
 	"sort"
 
 	"context"
@@ -20,6 +22,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/devlup-labs/Libr/core/db/config"
+	"github.com/devlup-labs/Libr/core/db/internal/node"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -102,6 +106,44 @@ func NewChatPeer(relayMultiAddrList []string) (*ChatPeer, error) {
 		return nil, err
 	}
 
+	//pubKey := keycache.LoadPubKey()
+	JS_API_key := config.Cfg.JSAPIKey
+	JS_ServerURL := config.Cfg.JSServerURL
+	if JS_API_key == "" || JS_ServerURL == "" {
+		fmt.Println("[DEBUG] Missing JS API key or server URL")
+		log.Fatal("Cant load env variables")
+	}
+	node_id:=node.GenerateNodeIDFromPublicKey()
+	Data := map[string]string{
+		"peer_id": h.ID().String(),
+		"node_id" : node_id,
+	}
+
+	jsonData, err := json.Marshal(Data)
+	if(err!=nil){
+		fmt.Println("Error marchalling req json for post boot")
+	}
+	req,err := http.NewRequest("POST", JS_ServerURL+"/api/postboot", bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		return nil,fmt.Errorf("failed to create request: %w",err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-api-key", JS_API_key)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil,fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil,fmt.Errorf("server returned non-200 status code: %d", resp.StatusCode)
+	}
+
+	fmt.Println("Inserted bootstrap node successfully")
 	fmt.Println("[DEBUG] Creating identify service")
 	idSvc, err := identify.NewIDService(h)
 	if err != nil {
@@ -149,7 +191,9 @@ func NewChatPeer(relayMultiAddrList []string) (*ChatPeer, error) {
 	sort.Slice(distmap, func(i, j int) bool {
 		return distmap[i].dist.Cmp(distmap[j].dist) < 0
 	})
-
+	if(len(relayMultiAddrList)==0){
+		log.Fatal("No relays given, please restart after some time")
+	}
 	relayIDused := distmap[0].relayID
 	fmt.Println(relayIDused)
 	var relayAddr string
