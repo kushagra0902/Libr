@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/devlup-labs/Libr/core/db/internal/models"
-	"github.com/devlup-labs/Libr/core/db/internal/node"
-	"github.com/devlup-labs/Libr/core/db/internal/routing"
+	"github.com/libr-forum/Libr/core/db/internal/models"
+	"github.com/libr-forum/Libr/core/db/internal/node"
+	"github.com/libr-forum/Libr/core/db/internal/routing"
 )
 
 type PingRequest struct {
@@ -61,6 +61,9 @@ func HandlePing(body interface{}, localNode *models.Node, rt *routing.RoutingTab
 		return nil
 	}
 	rt.InsertNode(localNode, senderNode, GlobalPinger)
+	routing.GlobalRT = rt // Update the global reference
+
+	fmt.Print("Routing Table", rt)
 
 	fmt.Printf("Ping from node ID: %x, Peer ID: %s\n", nodeID, senderNode.PeerId)
 	data, err := json.Marshal(PingResponse{Status: "ok"})
@@ -169,6 +172,9 @@ func FindNodeHandler(body interface{}, localNode *models.Node, rt *routing.Routi
 
 	// Insert sender node into routing table
 	rt.InsertNode(localNode, senderNode, GlobalPinger)
+	routing.GlobalRT = rt // Update the global reference
+
+	fmt.Print("Routing Table", rt)
 
 	data, err := json.Marshal(closest)
 	if err != nil {

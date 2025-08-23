@@ -10,10 +10,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/devlup-labs/Libr/core/db/config"
-	"github.com/devlup-labs/Libr/core/db/internal/keycache"
-	peer "github.com/devlup-labs/Libr/core/db/internal/network/peers"
-	"github.com/devlup-labs/Libr/core/db/internal/utils"
+	"github.com/libr-forum/Libr/core/db/config"
+	"github.com/libr-forum/Libr/core/db/internal/keycache"
+	peer "github.com/libr-forum/Libr/core/db/internal/network/peers"
+	"github.com/libr-forum/Libr/core/db/internal/routing"
+	"github.com/libr-forum/Libr/core/db/internal/utils"
 	"github.com/joho/godotenv"
 )
 
@@ -47,8 +48,8 @@ func main() {
 	fmt.Println("Interrupt received. Exiting gracefully.")
 	deleteFromJSServer()
 	fmt.Println("Sent delete request to JS server")
-	if peer.GlobalRT != nil {
-		peer.GlobalRT.SaveToDBAsync()
+	if routing.GlobalRT != nil {
+		routing.GlobalRT.SaveToDBAsync()
 		time.Sleep(1 * time.Second)
 	}
 }

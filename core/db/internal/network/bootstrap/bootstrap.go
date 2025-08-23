@@ -10,14 +10,14 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/devlup-labs/Libr/core/db/internal/models"
-	"github.com/devlup-labs/Libr/core/db/internal/network"
-	"github.com/devlup-labs/Libr/core/db/internal/node"
-	"github.com/devlup-labs/Libr/core/db/internal/routing"
+	"github.com/libr-forum/Libr/core/db/internal/models"
+	"github.com/libr-forum/Libr/core/db/internal/network"
+	"github.com/libr-forum/Libr/core/db/internal/node"
+	"github.com/libr-forum/Libr/core/db/internal/routing"
 )
 
 func BootstrapFromPeers(dbnodes []*models.Node, localNode *models.Node, rt *routing.RoutingTable) {
-	fmt.Println("dbnodes:")
+	fmt.Println("🌐 Bootstrapping from peers...")
 	for _, n := range dbnodes {
 		fmt.Printf("PeerId: %s, NodeId: %s\n", n.PeerId, base64.StdEncoding.EncodeToString(n.NodeId[:]))
 	}
@@ -192,6 +192,9 @@ func Bootstrap(bootstrapNode *models.Node, localNode *models.Node, rt *routing.R
 	seenMu.Lock()
 	for _, n := range seen {
 		rt.InsertNode(localNode, n, pinger)
+		routing.GlobalRT = rt // Update the global reference
+
+		fmt.Print("Routing Table", rt)
 	}
 	seenMu.Unlock()
 
@@ -199,8 +202,11 @@ func Bootstrap(bootstrapNode *models.Node, localNode *models.Node, rt *routing.R
 		bootstrapNode.PeerId, len(seen))
 }
 
-func NodeUpdate(localNode *models.Node, rt *routing.RoutingTable) {
-	fmt.Println("Node Update heheheh")
+func NodeUpdate(localNode *models.Node, rt *routing.RoutingTable, bootstrapAddrs []*models.Node) {
+	fmt.Println("🔄 Node Update started...")
+
+	success := false // track if any peer responds
+
 	for _, bucket := range rt.Buckets {
 		for _, dbnode := range bucket.Nodes {
 			if dbnode.PeerId == "" || dbnode.NodeId == [20]byte{} {
@@ -217,16 +223,24 @@ func NodeUpdate(localNode *models.Node, rt *routing.RoutingTable) {
 				"peer_id": localNode.PeerId,
 			}
 			jsonBytes, _ := json.Marshal(jsonMap)
+
 			resp, err := network.GlobalPostFunc(dbnode.PeerId, "/route=ping", jsonBytes)
 			if err != nil {
 				fmt.Printf("⚠ Failed to ping node %s: %v\n", dbnode.PeerId, err)
 				continue
 			}
-			// if len(resp) == 0 {
-			// 	fmt.Printf("⚠ Ping to node %s returned empty response\n", dbnode.PeerId)
-			// 	continue
-			// }
+			if len(resp) == 0 {
+				fmt.Printf("⚠ Ping to node %s returned empty response\n", dbnode.PeerId)
+				continue
+			}
+
 			fmt.Printf("✅ Node %s responded: %s\n", dbnode.PeerId, string(resp))
+			success = true
 		}
+	}
+
+	if !success {
+		fmt.Println("❗ No existing peers responded, falling back to bootstrap nodes...")
+		BootstrapFromPeers(bootstrapAddrs, localNode, rt)
 	}
 }
