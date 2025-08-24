@@ -19,8 +19,24 @@ import (
 func BootstrapFromPeers(dbnodes []*models.Node, localNode *models.Node, rt *routing.RoutingTable) {
 	fmt.Println("🌐 Bootstrapping from peers...")
 	for _, n := range dbnodes {
-		fmt.Printf("PeerId: %s, NodeId: %s\n", n.PeerId, base64.StdEncoding.EncodeToString(n.NodeId[:]))
+		output := ""
+
+		if n.PeerId != "" {
+			output += fmt.Sprintf("PeerId: %s", n.PeerId)
+		}
+
+		if len(n.NodeId) > 0 {
+			if output != "" {
+				output += ", "
+			}
+			output += fmt.Sprintf("NodeId: %s", base64.StdEncoding.EncodeToString(n.NodeId[:]))
+		}
+
+		if output != "" {
+			fmt.Println(output)
+		}
 	}
+
 	var wg sync.WaitGroup
 	seen := make(map[string]bool)
 	var mu sync.Mutex // protect access to `seen` map
@@ -194,7 +210,7 @@ func Bootstrap(bootstrapNode *models.Node, localNode *models.Node, rt *routing.R
 		rt.InsertNode(localNode, n, pinger)
 		routing.GlobalRT = rt // Update the global reference
 
-		fmt.Print("Routing Table", rt)
+		fmt.Println("Routing Table mmm = ", rt.String())
 	}
 	seenMu.Unlock()
 

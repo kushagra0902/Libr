@@ -7,15 +7,16 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/libr-forum/Libr/core/db/config"
 	"github.com/libr-forum/Libr/core/db/internal/keycache"
 	peer "github.com/libr-forum/Libr/core/db/internal/network/peers"
 	"github.com/libr-forum/Libr/core/db/internal/routing"
 	"github.com/libr-forum/Libr/core/db/internal/utils"
-	"github.com/joho/godotenv"
 )
 
 var JS_API_key string
@@ -24,12 +25,18 @@ var JS_ServerURL string
 func main() {
 	keycache.InitKeys()
 	godotenv.Load()
-	JS_API_key = config.Cfg.JSAPIKey
-	JS_ServerURL = config.Cfg.JSServerURL
-	if JS_API_key == "" || JS_ServerURL == "" {
-		fmt.Println("[DEBUG] Missing JS API key or server URL")
-		return
-	}
+	   err := CreateDbConfig()
+	   if err != nil {
+		   fmt.Println("Error creating config file. Kindly create your own if required")
+	   }
+	   cf, err := config.ReadDBConfigFile()
+	   if err != nil {
+		   fmt.Println("Error reading values from config file")
+	   }
+	   JS_API_key = cf.API_KEY
+
+	   JS_ServerURL = "https://libr-server.onrender.com"
+	   
 	//utils.SetupMongo("mongodb+srv://peer:peerhehe@cluster0.vswojqe.mongodb.net/")
 	//utils.SetupMongo(JS_ServerURL)
 	relayAddrs, err := utils.GetRelayAddrFromJSServer()
@@ -46,7 +53,9 @@ func main() {
 
 	<-sigChan
 	fmt.Println("Interrupt received. Exiting gracefully.")
+	if(config.DBtype=="boot"){
 	deleteFromJSServer()
+	}
 	fmt.Println("Sent delete request to JS server")
 	if routing.GlobalRT != nil {
 		routing.GlobalRT.SaveToDBAsync()
@@ -86,4 +95,28 @@ func deleteFromJSServer() error {
 
 	fmt.Printf("Successfully deleted relay")
 	return nil
+}
+
+func CreateDbConfig() error {
+	   path := config.GetDBConfigPath()
+
+	   if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		   return fmt.Errorf("failed to create modconfig directory: %w", err)
+	   }
+
+	   // Only create the file if it does not already exist
+	   if _, err := os.Stat(path); os.IsNotExist(err) {
+		   f, err := os.Create(path)
+		   if err != nil {
+			   return fmt.Errorf("failed to create config file: %w", err)
+		   }
+		   defer f.Close()
+
+		   // Write an empty JSON object if file is new
+		   _, err = f.WriteString("{}")
+		   if err != nil {
+			   return fmt.Errorf("failed to write empty JSON to config file: %w", err)
+		   }
+	   }
+	   return nil
 }

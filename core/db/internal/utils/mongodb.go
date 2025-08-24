@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/libr-forum/Libr/core/db/config"
 	"github.com/libr-forum/Libr/core/db/internal/models"
 	// "github.com/libr-forum/Libr/core/db/internal/node"
 	// "go.mongodb.org/mongo-driver/bson"
@@ -157,7 +156,7 @@ type NodeResp struct {
 
 // ✅ Fetch relay addresses
 func GetRelayAddrFromJSServer() ([]string, error) {
-	serverURL := config.Cfg.JSServerURL
+	serverURL := "https://libr-server.onrender.com"
 
 	req, err := http.NewRequest("GET", serverURL+"/api/getrelay", nil)
 	if err != nil {

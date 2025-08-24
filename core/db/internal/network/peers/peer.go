@@ -107,11 +107,19 @@ func NewChatPeer(relayMultiAddrList []string) (*ChatPeer, error) {
 	}
 
 	//pubKey := keycache.LoadPubKey()
-	JS_API_key := config.Cfg.JSAPIKey
-	JS_ServerURL := config.Cfg.JSServerURL
-	if JS_API_key == "" || JS_ServerURL == "" {
+	cf,err := config.ReadDBConfigFile()
+	if(err!=nil){
+		fmt.Println("Error reading vlas from config file")
+	}
+	JS_API_key := cf.API_KEY
+
+	JS_ServerURL := "https://libr-server.onrender.com"
+
+	if(config.DBtype=="boot"){
+		fmt.Println("RUNNING DB AS BOOTSTRAP. APPROPRIATE CONFIG FOUND")
+	if JS_API_key == ""  {
 		fmt.Println("[DEBUG] Missing JS API key or server URL")
-		log.Fatal("Cant load env variables")
+		log.Fatal("Cant get config vars at peer.go")
 	}
 	node_id:=node.GenerateNodeIDFromPublicKey()
 	Data := map[string]string{
@@ -144,6 +152,7 @@ func NewChatPeer(relayMultiAddrList []string) (*ChatPeer, error) {
 	}
 
 	fmt.Println("Inserted bootstrap node successfully")
+}
 	fmt.Println("[DEBUG] Creating identify service")
 	idSvc, err := identify.NewIDService(h)
 	if err != nil {
