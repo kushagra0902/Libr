@@ -113,7 +113,7 @@ func NewChatPeer(relayMultiAddrList []string) (*ChatPeer, error) {
 	}
 	JS_API_key := cf.API_KEY
 
-	JS_ServerURL := "https://libr-server.onrender.com"
+	JS_ServerURL := "https://libr-q0ok.onrender.com"
 
 	if(config.DBtype=="boot"){
 		fmt.Println("RUNNING DB AS BOOTSTRAP. APPROPRIATE CONFIG FOUND")

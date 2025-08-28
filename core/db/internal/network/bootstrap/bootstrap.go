@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"reflect"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/libr-forum/Libr/core/db/internal/models"
@@ -250,7 +251,13 @@ func NodeUpdate(localNode *models.Node, rt *routing.RoutingTable, bootstrapAddrs
 				continue
 			}
 
-			fmt.Printf("✅ Node %s responded: %s\n", dbnode.PeerId, string(resp))
+			respStr := string(resp)
+			if strings.HasPrefix(respStr, "[DEBUG]") {
+				fmt.Printf("⚠ Node %s responded with error: %s\n", dbnode.PeerId, respStr)
+				continue
+			}
+
+			fmt.Printf("✅ Node %s responded: %s\n", dbnode.PeerId, respStr)
 			success = true
 		}
 	}

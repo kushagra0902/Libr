@@ -1,10 +1,11 @@
 package utils
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/libr-forum/Libr/core/db/internal/models"
@@ -143,7 +144,7 @@ var MongoClient *mongo.Client
 // }
 
 type modResp struct {
-	ModLists []models.Mods `json:"modlist"`
+	ModLists []models.Mods `json:"mod_list"`
 }
 
 // type relays struct {
@@ -151,12 +152,12 @@ type modResp struct {
 // }
 
 type NodeResp struct {
-	NodesLists []models.Node `json:"nodeslist"`
+	NodesLists []models.Node `json:"boot_list"`
 }
 
 // ✅ Fetch relay addresses
 func GetRelayAddrFromJSServer() ([]string, error) {
-	serverURL := "https://libr-server.onrender.com"
+	serverURL := "https://libr-q0ok.onrender.com"
 
 	req, err := http.NewRequest("GET", serverURL+"/api/getrelay", nil)
 	if err != nil {
@@ -200,14 +201,13 @@ type relayResp struct {
 
 // ✅ Fetch mods
 func GetModsFromJSServer() ([]*models.Mods, error) {
-	serverURL := os.Getenv("JS_ServerURL")
+	fmt.Println("Getting Mods from JS Server...")
 
-	req, err := http.NewRequest("GET", serverURL+"/api/getmod", nil) // 🔥 corrected endpoint
+	serverURL := "https://libr-q0ok.onrender.com"
+	req, err := http.NewRequest("GET", serverURL+"/api/getmod", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
-
-	var ModReturnList []*models.Mods
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
@@ -220,29 +220,46 @@ func GetModsFromJSServer() ([]*models.Mods, error) {
 		return nil, fmt.Errorf("server returned non-200 status code: %d", resp.StatusCode)
 	}
 
-	var payload modResp
-	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+	fmt.Println("mod res body = ", string(bodyBytes))
+
+	// Temporary struct for decoding raw data
+	type RawMod struct {
+		PeerId    string `json:"peer_id"`
+		PublicKey string `json:"public_key"`
+	}
+
+	var rawResp struct {
+		ModLists []RawMod `json:"mod_list"`
+	}
+
+	if err := json.Unmarshal(bodyBytes, &rawResp); err != nil {
 		return nil, fmt.Errorf("failed to decode JSON response: %w", err)
 	}
 
-	for i := range payload.ModLists {
-		m := payload.ModLists[i] // copy to avoid pointer bug
-		ModReturnList = append(ModReturnList, &m)
+	var modReturnList []*models.Mods
+	for _, raw := range rawResp.ModLists {
+		modReturnList = append(modReturnList, &models.Mods{
+			Peerid:    raw.PeerId,
+			PublicKey: raw.PublicKey,
+		})
 	}
 
-	return ModReturnList, nil
+	return modReturnList, nil
 }
 
 // ✅ Fetch DB nodes
 func GetDBFromJSServer() ([]*models.Node, error) {
-	serverURL := os.Getenv("JS_ServerURL")
+	fmt.Println("Getting DB from JS Servers...")
 
-	req, err := http.NewRequest("GET", serverURL+"/api/getboot", nil) // 🔥 corrected endpoint
+	serverURL := "https://libr-q0ok.onrender.com"
+	req, err := http.NewRequest("GET", serverURL+"/api/getboot", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
-
-	var NodeReturnList []*models.Node
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
@@ -252,18 +269,42 @@ func GetDBFromJSServer() ([]*models.Node, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("server returned non-200 status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("server returned status code: %d", resp.StatusCode)
 	}
 
-	var payload NodeResp
-	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	fmt.Println("res body = ", string(bodyBytes))
+
+	// Temporary struct for decoding
+	type RawNode struct {
+		NodeId string `json:"node_id"`
+		PeerId string `json:"peer_id"`
+	}
+
+	var rawResp struct {
+		NodesLists []RawNode `json:"boot_list"`
+	}
+
+	if err := json.Unmarshal(bodyBytes, &rawResp); err != nil {
 		return nil, fmt.Errorf("failed to decode JSON response: %w", err)
 	}
 
-	for i := range payload.NodesLists {
-		n := payload.NodesLists[i] // copy to avoid pointer bug
-		NodeReturnList = append(NodeReturnList, &n)
+	var result []*models.Node
+	for _, raw := range rawResp.NodesLists {
+		decoded, err := base64.StdEncoding.DecodeString(raw.NodeId)
+		if err != nil || len(decoded) != 20 {
+			fmt.Printf("⚠ Skipping node with invalid node_id: %s\n", raw.NodeId)
+			continue
+		}
+
+		var nodeId [20]byte
+		copy(nodeId[:], decoded)
+
+		result = append(result, &models.Node{
+			NodeId: nodeId,
+			PeerId: raw.PeerId,
+		})
 	}
 
-	return NodeReturnList, nil
+	return result, nil
 }

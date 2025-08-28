@@ -35,7 +35,7 @@ func main() {
 	   }
 	   JS_API_key = cf.API_KEY
 
-	   JS_ServerURL = "https://libr-server.onrender.com"
+	   JS_ServerURL = "https://libr-q0ok.onrender.com"
 	   
 	//utils.SetupMongo("mongodb+srv://peer:peerhehe@cluster0.vswojqe.mongodb.net/")
 	//utils.SetupMongo(JS_ServerURL)
