@@ -102,4 +102,4 @@ func createTables() error {
 	return nil
 }
 
-var DBtype = "normal"
+// var DBtype = "normal"

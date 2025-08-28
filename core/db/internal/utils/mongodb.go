@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/libr-forum/Libr/core/db/internal/models"
@@ -157,7 +158,7 @@ type NodeResp struct {
 
 // ✅ Fetch relay addresses
 func GetRelayAddrFromJSServer() ([]string, error) {
-	serverURL := "https://libr-q0ok.onrender.com"
+	serverURL := os.Getenv("JS_ServerURL")
 
 	req, err := http.NewRequest("GET", serverURL+"/api/getrelay", nil)
 	if err != nil {

@@ -9,6 +9,8 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"os"
+
 	//"os"
 	"sort"
 
@@ -22,8 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/libr-forum/Libr/core/db/config"
-	"github.com/libr-forum/Libr/core/db/internal/node"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -33,6 +33,7 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/client"
 	"github.com/libp2p/go-libp2p/p2p/protocol/holepunch"
 	"github.com/libp2p/go-libp2p/p2p/protocol/identify"
+	"github.com/libr-forum/Libr/core/db/internal/node"
 	"github.com/multiformats/go-multiaddr"
 
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
@@ -107,15 +108,15 @@ func NewChatPeer(relayMultiAddrList []string) (*ChatPeer, error) {
 	}
 
 	//pubKey := keycache.LoadPubKey()
-	cf,err := config.ReadDBConfigFile()
-	if(err!=nil){
-		fmt.Println("Error reading vlas from config file")
-	}
-	JS_API_key := cf.API_KEY
+	// cf,err := config.ReadDBConfigFile()
+	// if(err!=nil){
+	// 	fmt.Println("Error reading vlas from config file")
+	// }
 
-	JS_ServerURL := "https://libr-q0ok.onrender.com"
-
-	if(config.DBtype=="boot"){
+	JS_API_key := os.Getenv("JS_API_KEY")
+	JS_ServerURL := os.Getenv("JS_ServerURL")
+	db_type := os.Getenv("db_type")
+	if(db_type=="boot"){
 		fmt.Println("RUNNING DB AS BOOTSTRAP. APPROPRIATE CONFIG FOUND")
 	if JS_API_key == ""  {
 		fmt.Println("[DEBUG] Missing JS API key or server URL")
