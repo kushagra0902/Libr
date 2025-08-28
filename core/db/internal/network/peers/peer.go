@@ -91,7 +91,7 @@ func NewChatPeer(relayMultiAddrList []string) (*ChatPeer, error) {
 
 	fmt.Println("[DEBUG] Creating libp2p Host")
 	h, err := libp2p.New(
-		libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0/ws"), // WebSocket
+		libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/443/ws"), // WebSocket
 		libp2p.Security(libp2ptls.ID, libp2ptls.New),
 		libp2p.ConnectionManager(connMgr),
 		libp2p.EnableNATService(),
