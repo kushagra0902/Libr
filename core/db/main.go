@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/libr-forum/Libr/core/db/internal/keycache"
 	peer "github.com/libr-forum/Libr/core/db/internal/network/peers"
 	"github.com/libr-forum/Libr/core/db/internal/routing"
@@ -22,10 +21,10 @@ var JS_ServerURL string
 
 func main() {
 	keycache.InitKeys()
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println("Error loading .env file")
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	fmt.Println("Error loading .env file")
+	// }
 	JS_API_key = os.Getenv("JS_API_KEY")
 	JS_ServerURL = os.Getenv("JS_ServerURL")
 	relayAddrs, err := utils.GetRelayAddrFromJSServer()
