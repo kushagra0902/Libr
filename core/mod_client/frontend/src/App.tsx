@@ -124,10 +124,16 @@ const App: React.FC = () => {
     setCommunities,
     isDarkMode,
     setCurrentCommunity,
-    communities
+    communities,
+    isIncognito,
+    setIncognito // <-- add this
   } = useAppStore();
   const [relayFailed, setRelayFailed] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setIncognito(false); // Force incognito off on app run
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
