@@ -2,9 +2,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import { useSidebarStore } from '../../store/useSidebarStore';
-import { Shield, Cog, Hash, Plus, Settings, Moon, Sun, RefreshCcw , ChevronLeft, Eye, Menu, Wrench, User, AlertTriangle } from 'lucide-react';
+import { Shield, Hash, Eye, Wrench, AlertTriangle, EyeOff } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { RegenKeys } from 'wailsjs/go/main/App';
+import { RegenKeys,EnterIncognito,ExitIncognito } from 'wailsjs/go/main/App';
 import logoSVG from '../assets/icon_transparent.svg';
 import { apiService } from '@/services/api';
 import { logger } from '../../logger/logger';
@@ -30,7 +30,8 @@ export const Sidebar: React.FC = () => {
     isDarkMode, 
     toggleTheme,
     joinCommunity,
-    setCommunities
+    setCommunities,
+    isIncognito,
   } = useAppStore();
   
   const navigate = useNavigate();
@@ -357,7 +358,7 @@ export const Sidebar: React.FC = () => {
           </AlertDialogTrigger>
 
           {/* First Popup: User Info */}
-          <AlertDialogContent className="bg-card border border-border/50 rounded-2xl shadow-xl text-foreground p-4 w-[90%] max-w-md">
+          <AlertDialogContent className="bg-card border border-border/50 rounded-2xl shadow-xl text-foreground p-4 w-auto">
             {/* <AlertDialogHeader>
               <AlertDialogTitle>Your Identity</AlertDialogTitle>
               <AlertDialogDescription className="mt-2">
@@ -365,7 +366,7 @@ export const Sidebar: React.FC = () => {
               </AlertDialogDescription>
             </AlertDialogHeader> */}
 
-            <div className="flex flex-row space-x-4 items-center">
+            <div className="flex flex-row space-x-4 items-center  w-auto max-w-full">
                 {user.avatarSvg && user.avatarSvg !== "unknown" ? (
                   <img
                     src={`data:image/svg+xml;base64,${user.avatarSvg}`}
@@ -398,22 +399,52 @@ export const Sidebar: React.FC = () => {
               </div>
             </div>
             
-            <AlertDialogFooter>
-              <div className='flex justify-between w-full'>
-                <button
-                  onClick={() => {
-                    setShowResetConfirm(true);
-                    logger.debug("Reset identity initiated", { alias: user.alias });
+            <AlertDialogFooter className='flex justify-center w-auto gap-x-2'>
+              <button
+                onClick={() => {
+                  setShowResetConfirm(true);
+                  logger.debug("Reset identity initiated", { alias: user.alias });
 
-                  }}
-                  className="libr-button bg-red-500 hover:bg-red-600 text-white"
-                >
-                  Reset Identity
-                </button>
-                <AlertDialogCancel className="libr-button bg-muted hover:bg-muted/70">
-                  Close
-                </AlertDialogCancel>
-              </div>
+                }}
+                className="libr-button bg-red-500 hover:bg-red-600 text-white"
+              >
+                Reset Identity
+              </button>
+              <button className='libr-button bg-libr-secondary flex flex-row items-center justify-center space-x-2 text-libr-primary'
+                onClick={async () => {
+                  // Toggle incognito state using app store
+                  useAppStore.getState().setIncognito(!isIncognito);
+                  if(isIncognito){
+                    logger.debug("Exited incognito mode");
+                    console.log("Exited incognito mode");
+                    // Reinitialize keys to original
+                    const pubKey = await ExitIncognito();
+                    const user = await apiService.authenticate(pubKey);
+                    setUser(user);
+                  } else {
+                    logger.debug("Entered incognito mode");
+                    console.log("Entered incognito mode");
+                    const tempPubKey = await EnterIncognito();
+                    const tempUser = await apiService.authenticate(tempPubKey);
+                    setUser(tempUser);
+                  }
+                }}
+              >
+                {isIncognito ? (
+                  <>
+                    <EyeOff />
+                    <span>Exit Incognito</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye />
+                    <span>Enter Incognito</span>
+                  </>
+                )}
+              </button>
+              <AlertDialogCancel className="libr-button bg-muted hover:bg-muted/70">
+                Close
+              </AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

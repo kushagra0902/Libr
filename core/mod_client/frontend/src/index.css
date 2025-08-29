@@ -82,8 +82,45 @@ body,
     --libr-primary: 10 15 28;
     --libr-secondary: 237 237 237;
     --libr-accent1: 31 164 169;
-    /* --libr-accent1: 166 84 95; */
     --libr-accent2: 0 252 223;
+  }
+
+  .incognito {
+    --background: 270 60% 8%;                /* even darker purple */
+    --foreground: 270 60% 92%;                /* light purple for text */
+
+    --card: 270 60% 10%;
+    --card-foreground: 270 60% 92%;
+
+    --popover: 270 60% 12%;
+    --popover-foreground: 270 60% 92%;
+
+    --primary: 270 60% 28%;                   /* strong purple */
+    --primary-foreground: 270 60% 98%;
+
+    --secondary: 270 40% 16%;                 /* muted dark purple */
+    --secondary-foreground: 270 60% 92%;
+
+    --muted: 270 40% 16%;
+    --muted-foreground: 270 30% 60%;
+
+    --accent: 270 60% 28%;
+    --accent-foreground: 270 60% 98%;
+
+    --destructive: 300 60% 32%;               /* pinkish purple for destructive */
+    --destructive-foreground: 270 60% 98%;
+
+    --border: 270 40% 18%;
+    --input: 270 40% 18%;
+    --ring: 270 60% 40%;
+
+    --radius: 0.5rem;
+
+    /* libr Incognito Theme */
+    --libr-primary: 40 0 60;                  /* very dark purple rgb */
+    --libr-secondary: 225 210 240;                /* light purple rgb */
+    --libr-accent1: 210 180 230;                  /* accent purple rgb */
+    --libr-accent2: 255 245 255;                  /* whitish purple accent */
   }
 }
 

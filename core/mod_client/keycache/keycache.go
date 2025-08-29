@@ -3,7 +3,6 @@ package keycache
 import (
 	"crypto/ed25519"
 	"encoding/base64"
-	"fmt"
 	"log"
 
 	"github.com/devlup-labs/Libr/core/crypto/cryptoutils"
@@ -21,13 +20,26 @@ func InitKeys() {
 	if err != nil {
 		log.Fatalf("Failed to load keys: %v", err)
 	}
-	fmt.Println("private:", base64.StdEncoding.EncodeToString(PrivKey))
-	fmt.Println("public:", base64.StdEncoding.EncodeToString(PubKey))
+	logger.LogToFile("private key: " + base64.StdEncoding.EncodeToString(PrivKey))
+	logger.LogToFile("public key: " + base64.StdEncoding.EncodeToString(PubKey))
+}
+
+func InitTempKeys() {
+	var err error
+	PubKey, PrivKey, err = cryptoutils.LoadTempKeys()
+	if err != nil {
+		log.Fatalf("Failed to load keys: %v", err)
+	}
 	logger.LogToFile("private key: " + base64.StdEncoding.EncodeToString(PrivKey))
 	logger.LogToFile("public key: " + base64.StdEncoding.EncodeToString(PubKey))
 }
 
 func LoadPubKey() string {
 	pub, _, _ := cryptoutils.LoadKeys()
+	return base64.StdEncoding.EncodeToString(pub)
+}
+
+func LoadTempPubKey() string {
+	pub, _, _ := cryptoutils.LoadTempKeys()
 	return base64.StdEncoding.EncodeToString(pub)
 }

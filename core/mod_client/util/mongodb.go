@@ -80,7 +80,7 @@ func GetStartNodes() ([]*types.Node, error) {
 
 // GetOnlineMods fetches all currently online moderators from the DB
 func GetOnlineMods() ([]types.Mod, error) {
-	fmt.Println("Fetching online mods from MongoDB...")
+	log.Println("Fetching online mods from MongoDB...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -88,7 +88,7 @@ func GetOnlineMods() ([]types.Mod, error) {
 	collection := MongoClient.Database("Addrs").Collection("mods")
 	cursor, err := collection.Find(ctx, bson.M{})
 	if err != nil {
-		fmt.Println("Error fetching mods:", err)
+		log.Println("Error fetching mods:", err)
 		return nil, err
 	}
 	defer cursor.Close(ctx)
@@ -108,7 +108,7 @@ func GetOnlineMods() ([]types.Mod, error) {
 		})
 	}
 
-	fmt.Println("✅ Mods fetched successfully")
+	log.Println("✅ Mods fetched successfully")
 	return mods, nil
 }
 

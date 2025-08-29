@@ -10,6 +10,14 @@ export function Delete(arg1) {
   return window['go']['main']['App']['Delete'](arg1);
 }
 
+export function EnterIncognito() {
+  return window['go']['main']['App']['EnterIncognito']();
+}
+
+export function ExitIncognito() {
+  return window['go']['main']['App']['ExitIncognito']();
+}
+
 export function FetchAll(arg1) {
   return window['go']['main']['App']['FetchAll'](arg1);
 }

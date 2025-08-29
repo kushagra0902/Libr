@@ -347,7 +347,7 @@ const Hero:React.FC = () => {
               </div>
               <div className="flex flex-row justify-start mb-4 items-center md:justify-end md:p-8 w-full min-w-0">
                 <p
-                  className="text-muted-foreground opacity-50 md:blur-sm whitespace-nowrap text-[clamp(2rem,8vw,8rem)] pr-0 980:pr-10 text-center 980:text-left"
+                  className="text-muted-foreground opacity-50 whitespace-nowrap text-[clamp(2rem,8vw,8rem)] pr-0 980:pr-10 text-center 980:text-left"
                   style={{
                     lineHeight: 1.1,
                     textAlign: 'left',

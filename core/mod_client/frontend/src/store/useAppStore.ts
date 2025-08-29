@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { TitleBarTheme } from 'wailsjs/go/main/App';
@@ -51,18 +50,21 @@ interface AppState {
   // User state
   user: User | null;
   isAuthenticated: boolean;
-  
+
   // Theme state
   isDarkMode: boolean;
-  
+
+  // Incognito state
+  isIncognito: boolean;
+
   // Community state
   communities: Community[];
   currentCommunity: Community | null;
-  
+
   // Messages state
   messages: Message[];
   isLoading: boolean;
-  
+
   // Actions
   setUser: (user: User) => void;
   logout: () => void;
@@ -73,6 +75,7 @@ interface AppState {
   addMessage: (message: Message) => void;
   setLoading: (loading: boolean) => void;
   joinCommunity: (communityId: string) => void;
+  setIncognito: (incognito: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -82,6 +85,7 @@ export const useAppStore = create<AppState>()(
       user: null,
       isAuthenticated: false,
       isDarkMode: true,
+      isIncognito: false,
       communities: [],
       currentCommunity: null,
       messages: [],
@@ -89,46 +93,51 @@ export const useAppStore = create<AppState>()(
 
       // Actions
       setUser: (user) => set({ user, isAuthenticated: true }),
-      
       logout: () => set({ 
         user: null, 
         isAuthenticated: false,
         currentCommunity: null,
         messages: [] 
       }),
-      
       toggleTheme: () => {
         const newTheme = !get().isDarkMode;
         set({ isDarkMode: newTheme });
         document.documentElement.classList.toggle('dark', newTheme);
         TitleBarTheme(newTheme);
       },
-      
       setCommunities: (communities) => set({ communities }),
-      
       setCurrentCommunity: (community) => set({ 
         currentCommunity: community,
         messages: [] // Clear messages when switching communities
       }),
-      
       setMessages: (messages) => set({ messages }),
-      
       addMessage: (message) => set((state) => ({ 
         messages: [message, ...state.messages] 
       })),
-      
       setLoading: (loading) => set({ isLoading: loading }),
-      
       joinCommunity: (communityId) => set((state) => ({
         communities: state.communities.map(c => 
           c.id === communityId ? { ...c, isJoined: true } : c
         )
       })),
+      setIncognito: (incognito) => {
+        set({ isIncognito: incognito });
+        if (incognito) {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.add('incognito');
+        } else {
+          document.documentElement.classList.remove('incognito');
+          // Restore previous theme
+          const isDark = get().isDarkMode;
+          document.documentElement.classList.toggle('dark', isDark);
+        }
+      },
     }),
     {
       name: 'libr-storage',
       partialize: (state) => ({ 
-        isDarkMode: state.isDarkMode 
+        isDarkMode: state.isDarkMode,
+        isIncognito: state.isIncognito
       }),
     }
   )

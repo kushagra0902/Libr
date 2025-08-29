@@ -152,5 +152,3 @@ require (
 )
 
 replace github.com/devlup-labs/Libr/core/crypto => ../crypto
-
-// replace github.com/wailsapp/wails/v2 v2.10.2 => C:\Users\Arnav\go\pkg\mod

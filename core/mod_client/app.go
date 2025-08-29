@@ -217,6 +217,18 @@ func (a *App) RegenKeys() string {
 	return base64.StdEncoding.EncodeToString(pub)
 }
 
+func (a *App) EnterIncognito() string {
+	pub, _, _ := cryptoutils.GenerateTempKeyPair()
+	keycache.InitTempKeys()
+	return base64.StdEncoding.EncodeToString(pub)
+}
+
+func (a *App) ExitIncognito() string {
+	pub, _, _ := cryptoutils.LoadKeys()
+	keycache.InitKeys()
+	return base64.StdEncoding.EncodeToString(pub)
+}
+
 func (a *App) Connect(relayAdds []string) error {
 	err := Peers.StartNode(relayAdds)
 	if err != nil {

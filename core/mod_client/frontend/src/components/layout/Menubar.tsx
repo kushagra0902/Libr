@@ -119,7 +119,7 @@ export const Menubar: React.FC<MenubarProps> = ({ onLoaded }) => {
           className='flex justify-start hover:bg-muted/50 libr-button w-[100%] items-center space-x-2'
         >
           <Copyright className="aspect-square h-[40%]" />
-          <span className="mt-0.5">License & Agreement</span>
+          <span className="mt-0.5 text-left">License & Agreement</span>
         </button>
       </div>
       <div className="rounded-3xl m-2 bg-card w-[92%]">
@@ -132,7 +132,7 @@ export const Menubar: React.FC<MenubarProps> = ({ onLoaded }) => {
           className='flex justify-start hover:bg-muted/50 libr-button w-[100%] items-center space-x-2'
         >
           <PencilLine className="aspect-square h-[40%]" />
-          <span className="mt-0.5">Feedback</span>
+          <span className="mt-0.5 text-left">Feedback</span>
         </button>
       </div>
       <div className="rounded-3xl m-2 bg-card w-[92%]">
@@ -143,7 +143,7 @@ export const Menubar: React.FC<MenubarProps> = ({ onLoaded }) => {
           className="flex justify-start hover:bg-muted/50 libr-button w-[100%] items-center space-x-2"
         >
           <Globe className="aspect-square h-[40%]" />
-          <span className="mt-0.5">Visit Website</span>
+          <span className="mt-0.5 text-left">Visit Website</span>
         </button>
       </div>
       <div className="rounded-3xl m-2 bg-card w-[92%]">
@@ -154,7 +154,7 @@ export const Menubar: React.FC<MenubarProps> = ({ onLoaded }) => {
           className="flex justify-start libr-button hover:bg-muted/50 w-[100%] items-center space-x-2"
         >
           <Database className="aspect-square h-[40%]" />
-          <span className="mt-0.5">Host a database</span>
+          <span className="mt-0.5 text-left">Host a database</span>
         </button>
       </div>
     </div>

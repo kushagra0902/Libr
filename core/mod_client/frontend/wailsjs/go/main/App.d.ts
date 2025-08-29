@@ -8,6 +8,10 @@ export function Connect(arg1:Array<string>):Promise<void>;
 
 export function Delete(arg1:types.MsgCert):Promise<string>;
 
+export function EnterIncognito():Promise<string>;
+
+export function ExitIncognito():Promise<string>;
+
 export function FetchAll(arg1:time.Time):Promise<Array<types.RetMsgCert>>;
 
 export function FetchBatch(arg1:time.Time):Promise<number|Array<types.RetMsgCert>>;
