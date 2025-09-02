@@ -78,5 +78,6 @@ func (kb *KBucket) String() string {
 }
 
 type DBConfig struct {
+	JS_ServerURL string `json:"jsurl"`
 	API_KEY string `json:"x_api_key"`
 }

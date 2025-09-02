@@ -35,7 +35,7 @@ func main() {
 	   }
 	   JS_API_key = cf.API_KEY
 
-	   JS_ServerURL = "https://libr-server.onrender.com"
+	   JS_ServerURL = config.JS_ServerURL
 	   
 	//utils.SetupMongo("mongodb+srv://peer:peerhehe@cluster0.vswojqe.mongodb.net/")
 	//utils.SetupMongo(JS_ServerURL)
@@ -113,7 +113,7 @@ func CreateDbConfig() error {
 		   defer f.Close()
 
 		   // Write an empty JSON object if file is new
-		   _, err = f.WriteString("{}")
+		   _, err = f.WriteString("{\"jsurl\": \"https://libr-q0ok.onrender.com\"}")
 		   if err != nil {
 			   return fmt.Errorf("failed to write empty JSON to config file: %w", err)
 		   }

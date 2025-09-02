@@ -103,3 +103,5 @@ func createTables() error {
 }
 
 var DBtype = "normal"
+
+var JS_ServerURL string

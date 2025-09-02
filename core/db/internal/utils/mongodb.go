@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
+	"github.com/libr-forum/Libr/core/db/config"
 	"github.com/libr-forum/Libr/core/db/internal/models"
+
 	// "github.com/libr-forum/Libr/core/db/internal/node"
 	// "go.mongodb.org/mongo-driver/bson"
 
@@ -156,7 +157,7 @@ type NodeResp struct {
 
 // ✅ Fetch relay addresses
 func GetRelayAddrFromJSServer() ([]string, error) {
-	serverURL := "https://libr-server.onrender.com"
+	serverURL := config.JS_ServerURL
 
 	req, err := http.NewRequest("GET", serverURL+"/api/getrelay", nil)
 	if err != nil {
@@ -200,8 +201,7 @@ type relayResp struct {
 
 // ✅ Fetch mods
 func GetModsFromJSServer() ([]*models.Mods, error) {
-	serverURL := os.Getenv("JS_ServerURL")
-
+	serverURL := config.JS_ServerURL
 	req, err := http.NewRequest("GET", serverURL+"/api/getmod", nil) // 🔥 corrected endpoint
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -235,7 +235,7 @@ func GetModsFromJSServer() ([]*models.Mods, error) {
 
 // ✅ Fetch DB nodes
 func GetDBFromJSServer() ([]*models.Node, error) {
-	serverURL := os.Getenv("JS_ServerURL")
+	serverURL := config.JS_ServerURL
 
 	req, err := http.NewRequest("GET", serverURL+"/api/getboot", nil) // 🔥 corrected endpoint
 	if err != nil {

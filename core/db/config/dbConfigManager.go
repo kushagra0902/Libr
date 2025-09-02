@@ -73,5 +73,7 @@ func ReadDBConfigFile() (models.DBConfig, error) {
 		   DBtype = "boot"
 	   }
 
+	   JS_ServerURL = configObj.JS_ServerURL
+
 	   return configObj, nil
 }
