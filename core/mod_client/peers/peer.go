@@ -491,7 +491,7 @@ func (Cp *ChatPeer) Close() error {
 
 func deleteFromJSServer() error {
 	deleteData := map[string]string{
-		"peer_id": PeerID,
+		"public_key": PubKey,
 	}
 
 	jsonData, err := json.Marshal(deleteData)
