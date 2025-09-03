@@ -225,6 +225,8 @@ export const ChatRoom: React.FC = () => {
                   }}
                   className="libr-button bg-libr-accent1/20 rounded-2xl hover:bg-muted flex items-center space-x-2 text-sm"
                   title="Reload Messages"
+                  disabled={isLoading} // <-- disable when loading
+                  style={isLoading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 >
                   <RotateCcw className="w-4 h-4" />
                   <span className='mt-0.5'>Reload</span>

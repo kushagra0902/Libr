@@ -126,13 +126,13 @@ const App: React.FC = () => {
     setCurrentCommunity,
     communities,
     isIncognito,
-    setIncognito // <-- add this
+    setIncognito
   } = useAppStore();
   const [relayFailed, setRelayFailed] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setIncognito(false); // Force incognito off on app run
+    setIncognito(false);
   }, []);
 
   useEffect(() => {
