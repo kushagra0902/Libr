@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
+	"io"
 	"log"
 	"math/big"
 	"net/http"
@@ -491,7 +492,7 @@ func (Cp *ChatPeer) Close() error {
 
 func deleteFromJSServer() error {
 	deleteData := map[string]string{
-		"peer_id": PeerID,
+		"public_key": PubKey,
 	}
 
 	jsonData, err := json.Marshal(deleteData)
@@ -515,7 +516,17 @@ func deleteFromJSServer() error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("server returned non-200 status code: %d", resp.StatusCode)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("server returned status %d, but failed to read response body", resp.StatusCode)
+		}
+		var errorResponse struct {
+			Message string `json:"message"`
+		}
+		if json.Unmarshal(body, &errorResponse) == nil && errorResponse.Message != "" {
+			return fmt.Errorf("server returned status %d: %s", resp.StatusCode, errorResponse.Message)
+		}
+		return fmt.Errorf("server returned status %d with response: %s", resp.StatusCode, string(body))
 	}
 
 	fmt.Printf("Successfully deleted node")
