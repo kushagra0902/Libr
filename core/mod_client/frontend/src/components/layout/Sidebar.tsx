@@ -400,6 +400,7 @@ export const Sidebar: React.FC = () => {
             </div>
             
             <AlertDialogFooter className='flex justify-center w-auto gap-x-2'>
+              {!isIncognito && (
               <button
                 onClick={() => {
                   setShowResetConfirm(true);
@@ -410,6 +411,7 @@ export const Sidebar: React.FC = () => {
               >
                 Reset Identity
               </button>
+              )}
               <button className='libr-button bg-libr-secondary flex flex-row items-center justify-center space-x-2 text-libr-primary'
                 onClick={async () => {
                   // Toggle incognito state using app store
