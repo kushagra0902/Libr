@@ -15,6 +15,7 @@ import (
 	"github.com/libr-forum/Libr/core/db/config"
 	"github.com/libr-forum/Libr/core/db/internal/keycache"
 	peer "github.com/libr-forum/Libr/core/db/internal/network/peers"
+	"github.com/libr-forum/Libr/core/db/internal/node"
 	"github.com/libr-forum/Libr/core/db/internal/routing"
 	"github.com/libr-forum/Libr/core/db/internal/utils"
 )
@@ -35,7 +36,7 @@ func main() {
 	   }
 	   JS_API_key = cf.API_KEY
 
-	   JS_ServerURL = "https://libr-server.onrender.com"
+	   JS_ServerURL = cf.JS_ServerURL
 	   
 	//utils.SetupMongo("mongodb+srv://peer:peerhehe@cluster0.vswojqe.mongodb.net/")
 	//utils.SetupMongo(JS_ServerURL)
@@ -46,8 +47,25 @@ func main() {
 	}
 
 	fmt.Println(relayAddrs)
-	peer.StartNode(relayAddrs)	
-	
+
+	go func() {
+    for {
+        // Close old host if it exists
+        if peer.Peer != nil && peer.Peer.Host != nil {
+            fmt.Println("[DEBUG] Closing host")
+            peer.Peer.Host.Close()
+        }
+
+        // Start a new node right away
+        fmt.Println("[DEBUG] Starting new node...")
+        peer.StartNode(relayAddrs)
+
+        // ⏰ Calculate how long to wait until the next o'clock
+        time.Sleep(55*time.Minute)
+    }
+}()
+
+
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
@@ -66,7 +84,7 @@ func main() {
 
 func deleteFromJSServer() error {
 	deleteData := map[string]string{
-		"peer_id" : peer.PeerID,
+		"node_id" : node.GenerateNodeIDFromPublicKey(),
 	}
 
 	jsonData, err := json.Marshal(deleteData)

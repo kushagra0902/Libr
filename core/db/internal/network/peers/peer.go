@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+
 	//"os"
 	"sort"
 
@@ -22,8 +23,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/libr-forum/Libr/core/db/config"
-	"github.com/libr-forum/Libr/core/db/internal/node"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -33,6 +32,9 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/client"
 	"github.com/libp2p/go-libp2p/p2p/protocol/holepunch"
 	"github.com/libp2p/go-libp2p/p2p/protocol/identify"
+	"github.com/libr-forum/Libr/core/db/config"
+	"github.com/libr-forum/Libr/core/db/internal/keycache"
+	"github.com/libr-forum/Libr/core/db/internal/node"
 	"github.com/multiformats/go-multiaddr"
 
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
@@ -88,18 +90,20 @@ func NewChatPeer(relayMultiAddrList []string) (*ChatPeer, error) {
 		// Other TLS configurations like ClientAuth, InsecureSkipVerify, etc.
 	}
 
+	privKey := keycache.LoadPrivKey()
+
 	fmt.Println("[DEBUG] Creating libp2p Host")
+	
 	h, err := libp2p.New(
-		libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0/ws"), // WebSocket
-		libp2p.Security(libp2ptls.ID, libp2ptls.New),
-		libp2p.ConnectionManager(connMgr),
-		libp2p.EnableNATService(),
-		libp2p.EnableRelay(),
-		libp2p.Transport(tcp.NewTCPTransport),
-		libp2p.Transport(websocket.New, websocket.WithTLSConfig(tlsConfig)),
-		// libp2p.Transport(websocket.NewWithTLSConfig(tlsConfig)),
-		// libp2p.Transport(websocket.New),
-	)
+    libp2p.Identity(privKey), // ✅ ensures peer ID is derived from privKey
+    libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0/ws"),
+    libp2p.Security(libp2ptls.ID, libp2ptls.New),
+    libp2p.ConnectionManager(connMgr),
+    libp2p.EnableNATService(),
+    libp2p.EnableRelay(),
+    libp2p.Transport(tcp.NewTCPTransport),
+    libp2p.Transport(websocket.New, websocket.WithTLSConfig(tlsConfig)),
+)
 
 	if err != nil {
 		fmt.Println("[DEBUG] Failed to create Host:", err)
@@ -113,7 +117,7 @@ func NewChatPeer(relayMultiAddrList []string) (*ChatPeer, error) {
 	}
 	JS_API_key := cf.API_KEY
 
-	JS_ServerURL := "https://libr-server.onrender.com"
+	JS_ServerURL := cf.JS_ServerURL
 
 	if(config.DBtype=="boot"){
 		fmt.Println("RUNNING DB AS BOOTSTRAP. APPROPRIATE CONFIG FOUND")
