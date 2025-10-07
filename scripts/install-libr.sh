@@ -1,120 +1,103 @@
-#!/usr/bin/env bash
+#!/bin/bash
+set -e
 
-set -euo pipefail
+# Detect distribution
+source /etc/os-release
+DISTRO=$ID
+DETECTED_ARCH=$(dpkg --print-architecture 2>/dev/null || uname -m)
 
-# -------------------------------
-# Configuration
-# -------------------------------
-VERSION="${1:-latest}"   # default = latest release
-ARCH="$(uname -m)"
-DEBUG="${DEBUG:-1}"       # set DEBUG=0 to silence
-REPO="libr-forum/libr"
+# Convert architecture names for different package formats
+case "$DETECTED_ARCH" in
+  x86_64|amd64)
+    DEB_ARCH="amd64"
+    RPM_ARCH="x86_64"
+    ARCH_ARCH="x86_64"
+    ;;
+  *)
+    echo "❌ Unsupported architecture: $DETECTED_ARCH"
+    exit 1
+    ;;
+esac
 
-log() { echo -e "🔹 $*"; }
-debug() { [[ "$DEBUG" -eq 1 ]] && echo -e "🐞 DEBUG: $*"; }
-err() { echo -e "❌ $*" >&2; exit 1; }
+# Fetch latest or use provided version
+LATEST_VERSION=$(curl -s https://api.github.com/repos/libr-forum/libr/releases/latest \
+  | grep tag_name | cut -d '"' -f4)
+VERSION=${1:-$LATEST_VERSION}
 
-# -------------------------------
-# Detect distro
-# -------------------------------
-detect_distro() {
-  if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    DISTRO=$ID
-    debug "Detected distro: $DISTRO"
-  else
-    err "Unable to detect distribution."
-  fi
-}
+# Convert version for package names (remove 'v' prefix if present)
+PACKAGE_VERSION=${VERSION#v}
 
-# -------------------------------
-# Detect installed version
-# -------------------------------
-installed_version() {
-  if command -v libr >/dev/null 2>&1; then
-    libr --version 2>/dev/null | awk '{print $2}'
-  else
-    echo ""
-  fi
-}
+# Check installed version
+if command -v libr >/dev/null 2>&1; then
+  INSTALLED_VERSION=$(libr --version | awk '{print $2}')
+else
+  INSTALLED_VERSION="none"
+fi
 
-# -------------------------------
-# Get latest release from GitHub
-# -------------------------------
-latest_version() {
-  curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" \
-    | grep '"tag_name":' | cut -d'"' -f4
-}
+if [ "$INSTALLED_VERSION" = "$VERSION" ]; then
+  echo "✅ libr $VERSION already installed."
+  exit 0
+fi
 
-# -------------------------------
-# Download + Install package
-# -------------------------------
-install_pkg() {
-  local url="$1"
-  local file="$2"
+echo "📦 Installing libr $VERSION for $DISTRO ($DETECTED_ARCH)..."
 
-  log "⬇️ Downloading $url"
-  if ! curl -fL "$url" -o "$file"; then
-    err "Failed to download $url"
-  fi
+case "$DISTRO" in
+  ubuntu|debian)
+    URL="https://github.com/libr-forum/libr/releases/download/$VERSION/libr_${PACKAGE_VERSION}_${DEB_ARCH}.deb"
+    wget -qO libr.deb "$URL"
+    sudo apt install -y ./libr.deb
+    rm libr.deb
+    
+    # Fix WebKit library issues for newer Ubuntu/Debian
+    if ! ldconfig -p | grep -q libwebkit2gtk-4.0.so.37; then
+      echo "🔧 Setting up WebKit compatibility..."
+      if [ -f /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.1.so.0 ]; then
+        sudo ln -sf /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.1.so.0 \
+                    /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.0.so.37
+        sudo ln -sf /usr/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.1.so.0 \
+                    /usr/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.0.so.18
+      fi
+    fi
+    ;;
+  fedora|rhel|centos)
+    URL="https://github.com/libr-forum/libr/releases/download/$VERSION/libr-${PACKAGE_VERSION}-1.${RPM_ARCH}.rpm"
+    wget -qO libr.rpm "$URL"
+    sudo dnf install -y ./libr.rpm || sudo yum install -y ./libr.rpm
+    rm libr.rpm
+    
+    # Fix WebKit library issues for newer Fedora/RHEL
+    if ! ldconfig -p | grep -q libwebkit2gtk-4.0.so.37; then
+      echo "🔧 Setting up WebKit compatibility..."
+      if [ -f /usr/lib64/libwebkit2gtk-4.1.so.0 ]; then
+        sudo ln -sf /usr/lib64/libwebkit2gtk-4.1.so.0 \
+                    /usr/lib64/libwebkit2gtk-4.0.so.37
+        sudo ln -sf /usr/lib64/libjavascriptcoregtk-4.1.so.0 \
+                    /usr/lib64/libjavascriptcoregtk-4.0.so.18
+      fi
+    fi
+    ;;
+  arch)
+    URL="https://github.com/libr-forum/libr/releases/download/$VERSION/libr-${PACKAGE_VERSION}-1-${ARCH_ARCH}.pkg.tar.zst"
+    wget -qO libr.pkg.tar.zst "$URL"
+    sudo pacman -U --noconfirm libr.pkg.tar.zst
+    rm libr.pkg.tar.zst
+    
+    # Fix WebKit library issues for Arch Linux
+    if ! ldconfig -p | grep -q libwebkit2gtk-4.0.so.37; then
+      echo "🔧 Setting up WebKit compatibility..."
+      if [ -f /usr/lib/libwebkit2gtk-4.1.so.0 ]; then
+        sudo ln -sf /usr/lib/libwebkit2gtk-4.1.so.0 \
+                    /usr/lib/libwebkit2gtk-4.0.so.37
+        sudo ln -sf /usr/lib/libjavascriptcoregtk-4.1.so.0 \
+                    /usr/lib/libjavascriptcoregtk-4.0.so.18
+      fi
+    fi
+    ;;
+  *)
+    echo "❌ Unsupported distribution: $DISTRO"
+    exit 1
+    ;;
+esac
 
-  case "$DISTRO" in
-    ubuntu|debian)
-      sudo dpkg -i "$file" || sudo apt-get install -f -y
-      ;;
-    fedora|rhel|centos|rocky|almalinux|opensuse*)
-      sudo rpm -Uvh --force "$file"
-      ;;
-    arch|manjaro)
-      sudo pacman -U --noconfirm "$file"
-      ;;
-    *)
-      err "Unsupported distro: $DISTRO"
-      ;;
-  esac
-}
-
-# -------------------------------
-# Main
-# -------------------------------
-main() {
-  detect_distro
-
-  if [[ "$VERSION" == "latest" ]]; then
-    VERSION="$(latest_version)"
-  fi
-  debug "Target version: $VERSION"
-
-  CURRENT="$(installed_version)"
-  debug "Currently installed version: ${CURRENT:-none}"
-
-  if [[ "$CURRENT" == "$VERSION" ]]; then
-    log "✅ libr $VERSION is already installed."
-    exit 0
-  fi
-
-  case "$DISTRO" in
-    ubuntu|debian)
-      FILE="libr_${VERSION}_${ARCH}.deb"
-      ;;
-    fedora|rhel|centos|rocky|almalinux|opensuse*)
-      FILE="libr-${VERSION}.${ARCH}.rpm"
-      ;;
-    arch|manjaro)
-      FILE="libr-${VERSION}-${ARCH}.pkg.tar.zst"
-      ;;
-    *)
-      err "Unsupported distro: $DISTRO"
-      ;;
-  esac
-
-  URL="https://github.com/${REPO}/releases/download/${VERSION}/${FILE}"
-  debug "Download URL: $URL"
-  debug "Local filename: $FILE"
-
-  install_pkg "$URL" "$FILE"
-
-  log "🎉 libr $VERSION installed successfully!"
-}
-
-main "$@"
+echo "✅ libr $VERSION installed successfully."
+echo "🚀 You can now run 'libr' from anywhere or find it in your applications menu."
