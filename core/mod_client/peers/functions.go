@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"math/big"
 	"strings"
 	"time"
@@ -15,6 +14,7 @@ import (
 )
 
 var Peer *ChatPeer
+var relayMultiAddrList []string
 
 type RelayDist struct {
 	relayID string
@@ -31,14 +31,31 @@ func StartNode(relayMultiAddrList []string) error {
 		return err
 	}
 
-	ctx := context.Background()
+	go func() {
+		for {
+			fmt.Println("[RESTART] Restarting peer triggered")
+			if Peer != nil && Peer.Host != nil {
+				if err := Peer.Host.Close(); err != nil {
+					fmt.Println("Error closing host: %v", err)
+				}
 
-	if err := Peer.Start(ctx); err != nil {
-		log.Fatal(err)
-		return err
-	}
+				var err error
+				Peer, err = NewChatPeer(relayMultiAddrList)
+				if err != nil {
+					fmt.Println("[RESTART] Error creating new peer after reset: %v", err)
+				}
+
+				ctx := context.Background()
+				if err := Peer.Start(ctx); err != nil {
+					fmt.Println("[RESTART] Error starting peer after reset: %v", err)
+				}
+			}
+
+			time.Sleep(time.Minute * 2)
+		}
+	}()
+
 	return nil
-	// initDHT()
 }
 
 func GET(targetPeerID string, route string) ([]byte, error) { //"/ts=123&&id=123"
@@ -98,9 +115,9 @@ func POST(targetPeerID string, route string, body []byte) ([]byte, error) {
 
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
-			fmt.Println("⏳ POST request timed out after 5s")
+			fmt.Println("POST request timed out after 5s")
 		} else {
-			fmt.Println("❌ POST request failed:", err)
+			fmt.Println("POST request failed:", err)
 		}
 		return nil, err
 	}

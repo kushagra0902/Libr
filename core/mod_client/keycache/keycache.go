@@ -7,6 +7,7 @@ import (
 
 	"github.com/devlup-labs/Libr/core/crypto/cryptoutils"
 	"github.com/devlup-labs/Libr/core/mod_client/logger"
+	"github.com/libp2p/go-libp2p/core/crypto"
 )
 
 var (
@@ -42,4 +43,14 @@ func LoadPubKey() string {
 func LoadTempPubKey() string {
 	pub, _, _ := cryptoutils.LoadTempKeys()
 	return base64.StdEncoding.EncodeToString(pub)
+}
+
+func LoadPrivKey() crypto.PrivKey {
+	_, priv, _ := cryptoutils.LoadKeys() // priv is ed25519.PrivateKey (a []byte)
+
+	libp2pPriv, err := crypto.UnmarshalEd25519PrivateKey(priv)
+	if err != nil {
+		panic(err)
+	}
+	return libp2pPriv
 }

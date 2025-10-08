@@ -119,8 +119,11 @@ func NewChatPeer(relayMultiAddrList []string) (*ChatPeer, error) {
 		// Other TLS configurations like ClientAuth, InsecureSkipVerify, etc.
 	}
 
+	PrivKey := keycache.LoadPrivKey()
+
 	fmt.Println("[DEBUG] Creating libp2p Host")
 	h, _ := libp2p.New(
+		libp2p.Identity(PrivKey),
 		libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0/ws"), // WebSocket
 		libp2p.Security(libp2ptls.ID, libp2ptls.New),
 		libp2p.ConnectionManager(connMgr),
